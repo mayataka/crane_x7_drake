@@ -1,0 +1,42 @@
+controller_manager:
+  ros__parameters:
+    update_rate: 400 # Hz
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    joint_position_controller:
+      type: joint_position_controller/JointGroupPositionController
+
+    # gripper_controller:
+    #   type: joint_trajectory_controller/JointTrajectoryController
+
+joint_position_controller:
+  ros__parameters:
+    joints:
+      - crane_x7_shoulder_fixed_part_pan_joint
+      - crane_x7_shoulder_revolute_part_tilt_joint
+      - crane_x7_upper_arm_revolute_part_twist_joint
+      - crane_x7_upper_arm_revolute_part_rotate_joint
+      - crane_x7_lower_arm_fixed_part_joint
+      - crane_x7_lower_arm_revolute_part_joint
+      - crane_x7_wrist_joint
+    command_interfaces:
+      - position
+    state_interfaces:
+      - position
+      - velocity
+
+joint_state_broadcaster:
+  ros__parameters:
+    joints:
+      - crane_x7_shoulder_fixed_part_pan_joint
+      - crane_x7_shoulder_revolute_part_tilt_joint
+      - crane_x7_upper_arm_revolute_part_twist_joint
+      - crane_x7_upper_arm_revolute_part_rotate_joint
+      - crane_x7_lower_arm_fixed_part_joint
+      - crane_x7_lower_arm_revolute_part_joint
+      - crane_x7_wrist_joint
+    state_interfaces:
+      - position
+      - velocity
