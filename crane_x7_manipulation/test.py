@@ -1,34 +1,100 @@
+from sys import platlibdir
 from pydrake.systems.framework import DiagramBuilder
 from pydrake.systems.analysis import Simulator
-from pydrake.multibody.plant import AddMultibodyPlantSceneGraph
+from pydrake.multibody.plant import AddMultibodyPlantSceneGraph, MultibodyPlant
 from pydrake.multibody.parsing import Parser
+from pydrake.geometry import Meshcat
+from pydrake.all import MeshcatVisualizerCpp, Integrator # where is this class declared ?
 
 import numpy as np
-import os
+from IPython.display import Javascript
+
+from crane_x7_manipulation import crane_x7_station, meshcat_utils
 
 
-builder = DiagramBuilder()
+URDF_PATH = 'rsc/crane_x7_description/crane_x7.urdf'
 
-urdf_path = os.path.abspath('crane_x7_description/crane_x7.urdf')
-plant, scene_graph = AddMultibodyPlantSceneGraph(builder, time_step=0.01)
-model = Parser(plant, scene_graph).AddModelFromFile(urdf_path)
+def create_model(urdf_path):
+    plant, model = crane_x7_station.create_crane_x7_plant(urdf_path=urdf_path)
+    plant.Finalize()
+    context = plant.CreateDefaultContext()
 
-# builder.Connect(scene_graph.get_query_output_port(),
-#                 plant.get_geometry_query_input_port())
+    plant.SetPositions(context, [-1.57, 0.1, 0, 0, 0, 1.6, 0, 0, 0]) # 7DOF (arm) + 2DOF (gripper)
+    plant.GetJointByName("crane_x7_upper_arm_revolute_part_rotate_joint").set_angle(context, -1.2)
+    plant.get_actuation_input_port().FixValue(context, np.zeros(9)) # 7DOF (arm) + 2DOF (gripper)
+    simulator = Simulator(plant, context)
+    simulator.AdvanceTo(5.0)
+    print(context)
 
-plant.Finalize()
+create_model(URDF_PATH)
 
 
+def create_model_scene_graph(urdf_path):
+    builder = DiagramBuilder()
 
-diagram = builder.Build()
-context = diagram.CreateDefaultContext()
-# print(context)
+    plant, model, scene_graph = crane_x7_station.create_crane_x7_plant_scene_graph(
+        builder=builder, urdf_path=urdf_path, time_step=1.0e-03)
+    plant.Finalize()
 
-context = plant.CreateDefaultContext()
-plant.SetPositions(context, [-1.57, 0.1, 0, 0, 0, 1.6, 0, 0, 0]) # 7DOF (arm) + 2DOF (gripper)
-plant.GetJointByName("crane_x7_upper_arm_revolute_part_rotate_joint").set_angle(context, -1.2)
-# print(context)
-plant.get_actuation_input_port().FixValue(context, np.zeros(8)) # 7DOF (arm) + 1DOF (gripper)
-simulator = Simulator(plant, context)
-simulator.AdvanceTo(5.0)
-# print(context)
+    meshcat = Meshcat()
+    web_url = meshcat.web_url()
+    # Javascript(f'window.open("{web_url}");')
+
+    visualizer = MeshcatVisualizerCpp.AddToBuilder(builder, scene_graph, meshcat)
+    diagram = builder.Build()
+    context = diagram.CreateDefaultContext()
+    diagram.Publish(context)
+
+    plant_context = plant.GetMyMutableContextFromRoot(context)
+    plant.SetPositions(plant_context, [-1.57, 0.1, 0, -1.2, 0, 1.6, 0, 0, 0]) # 7DOF (arm) + 2DOF (gripper)
+    plant.get_actuation_input_port().FixValue(plant_context, np.zeros(9)) # 7DOF (arm) + 2DOF (gripper)
+
+    # real time simulation on 
+    simulator = Simulator(diagram, context)
+    simulator.set_target_realtime_rate(1.0)
+    simulator.AdvanceTo(5.0)
+
+create_model_scene_graph(URDF_PATH)
+
+
+from crane_x7_manipulation import crane_x7_controller
+
+def create_diff_ik_controller(urdf_path):
+    builder = DiagramBuilder()
+
+    plant, model, scene_graph = crane_x7_station.create_crane_x7_plant_scene_graph(
+        builder=builder, urdf_path=urdf_path, time_step=1.0e-03)
+    plant.Finalize()
+
+    meshcat = Meshcat()
+    web_url = meshcat.web_url()
+    # Javascript(f'window.open("{web_url}");')
+
+    visualizer = MeshcatVisualizerCpp.AddToBuilder(builder, scene_graph, meshcat)
+
+    controller = builder.AddSystem(crane_x7_controller.DiffIKController(plant))
+    integrator = builder.AddSystem(Integrator(9))
+
+    builder.Connect(controller.get_output_port(), 
+                    integrator.get_input_port())
+    builder.Connect(integrator.get_output_port(),
+                    plant.get_actuation_input_port())
+    builder.Connect(plant.get_state_output_port(),
+                    controller.get_input_port())
+
+    diagram = builder.Build()
+    context = diagram.CreateDefaultContext()
+    diagram.Publish(context)
+
+    plant_context = plant.GetMyMutableContextFromRoot(context)
+
+    simulator = Simulator(diagram)
+    plant_context = plant.GetMyContextFromRoot(simulator.get_mutable_context())
+    plant.get_actuation_input_port().FixValue(plant_context, np.zeros((9, 1)))
+    integrator.set_integral_value(
+        integrator.GetMyContextFromRoot(simulator.get_mutable_context()), 
+            plant.get_state_output_port().Eval(plant_context)[0:9])
+    simulator.set_target_realtime_rate(1.0)
+    simulator.AdvanceTo(5.0)
+
+create_diff_ik_controller(URDF_PATH)

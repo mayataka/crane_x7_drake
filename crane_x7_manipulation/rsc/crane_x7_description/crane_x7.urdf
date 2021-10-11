@@ -88,7 +88,7 @@
     <limit effort="10.0" lower="-2.97132" upper="2.97132" velocity="4.81710873"/>
     <parent link="crane_x7_shoulder_fixed_part_link"/>
     <child link="crane_x7_shoulder_revolute_part_link"/>
-    <dynamics damping="1.0e-6" friction="2.0e-1"/>
+    <dynamics damping="1.0e-6" friction="0"/>
   </joint>
   <!-- For gazebo simulation -->
   <transmission name="crane_x7_shoulder_fixed_part_pan_joint_trans">
@@ -143,7 +143,7 @@
     <limit effort="10.0" lower="-1.570795" upper="1.570795" velocity="4.81710873"/>
     <parent link="crane_x7_shoulder_revolute_part_link"/>
     <child link="crane_x7_upper_arm_fixed_part_link"/>
-    <dynamics damping="1.0e-6" friction="2.0e-1"/>
+    <dynamics damping="1.0e-6" friction="0"/>
   </joint>
   <!-- For gazebo simulation -->
   <transmission name="crane_x7_shoulder_revolute_part_tilt_joint_trans">
@@ -219,7 +219,7 @@
     <limit effort="4.0" lower="-1.570795" upper="1.570795" velocity="4.81710873"/>
     <parent link="crane_x7_upper_arm_fixed_part_link"/>
     <child link="crane_x7_upper_arm_revolute_part_link"/>
-    <dynamics damping="1.0e-6" friction="2.0e-1"/>
+    <dynamics damping="1.0e-6" friction="0"/>
   </joint>
   <!-- For gazebo simulation -->
   <transmission name="crane_x7_upper_arm_revolute_part_twist_joint_trans">
@@ -263,7 +263,7 @@
     <limit effort="4.0" lower="-2.80718" upper="0.04141" velocity="4.81710873"/>
     <parent link="crane_x7_upper_arm_revolute_part_link"/>
     <child link="crane_x7_lower_arm_fixed_part_link"/>
-    <dynamics damping="1.0e-6" friction="2.0e-1"/>
+    <dynamics damping="1.0e-6" friction="0"/>
   </joint>
   <!-- For gazebo simulation -->
   <transmission name="crane_x7_upper_arm_revolute_part_rotate_joint_trans">
@@ -339,7 +339,7 @@
     <limit effort="4.0" lower="-2.77343" upper="1.51403" velocity="4.81710873"/>
     <parent link="crane_x7_lower_arm_fixed_part_link"/>
     <child link="crane_x7_lower_arm_revolute_part_link"/>
-    <dynamics damping="1.0e-6" friction="2.0e-1"/>
+    <dynamics damping="1.0e-6" friction="0"/>
   </joint>
   <!-- For gazebo simulation -->
   <transmission name="crane_x7_lower_arm_fixed_part_joint_trans">
@@ -458,7 +458,7 @@
     <limit effort="4.0" lower="-1.570795" upper="1.570795" velocity="4.81710873"/>
     <parent link="crane_x7_lower_arm_revolute_part_link"/>
     <child link="crane_x7_wrist_link"/>
-    <dynamics damping="1.0e-6" friction="2.0e-1"/>
+    <dynamics damping="1.0e-6" friction="0"/>
   </joint>
   <!-- For gazebo simulation -->
   <transmission name="crane_x7_lower_arm_revolute_part_joint_trans">
@@ -502,7 +502,7 @@
     <limit effort="4.0" lower="-2.96365" upper="2.97132" velocity="4.81710873"/>
     <parent link="crane_x7_wrist_link"/>
     <child link="crane_x7_gripper_base_link"/>
-    <dynamics damping="1.0e-6" friction="2.0e-1"/>
+    <dynamics damping="1.0e-6" friction="0"/>
   </joint>
   <!-- For gazebo simulation -->
   <transmission name="crane_x7_wrist_joint_trans">
@@ -580,11 +580,11 @@
   </link>
   <joint name="crane_x7_gripper_finger_a_joint" type="revolute">
     <origin rpy="0 0 0" xyz="-0.012 0.0 0.024"/>
-    <!-- <axis xyz="0 -1 0"/> -->
-    <!-- <limit effort="4.0" lower="0.0046" upper="1.62601" velocity="4.81710873"/> -->
+    <axis xyz="0 -1 0"/>
+    <limit effort="4.0" lower="0.0046" upper="1.62601" velocity="4.81710873"/>
     <parent link="crane_x7_gripper_base_link"/>
     <child link="crane_x7_gripper_finger_a_link"/>
-    <!-- <dynamics damping="1.0e-6" friction="8.0e-1"/> -->
+    <dynamics damping="1.0e-6" friction="0"/>
   </joint>
   <!-- for gazebo -->
   <transmission name="crane_x7_gripper_finger_a_joint_trans">
@@ -622,12 +622,12 @@
   </link>
   <joint name="crane_x7_gripper_finger_b_joint" type="revolute">
     <origin rpy="0 0 0" xyz="0.012 0.0 0.024"/>
-    <!-- <axis xyz="0 1 0"/> -->
-    <!-- <limit effort="4.0" lower="0.0046" upper="1.62601" velocity="4.81710873"/> -->
+    <axis xyz="0 1 0"/>
+    <limit effort="4.0" lower="0.0046" upper="1.62601" velocity="4.81710873"/>
     <parent link="crane_x7_gripper_base_link"/>
     <child link="crane_x7_gripper_finger_b_link"/>
     <!-- <mimic joint="crane_x7_gripper_finger_a_joint"/> -->
-    <!-- <dynamics damping="1.0e-6" friction="8.0e-1"/> -->
+    <dynamics damping="1.0e-6" friction="0"/>
   </joint>
   <link name="crane_x7_gripper_finger_b_link">
     <visual>
@@ -649,14 +649,28 @@
       <inertia ixx="7.48E-06" ixy="3.61E-07" ixz="6.34E-08" iyy="4.09E-06" iyz="2.28E-07" izz="4.37E-06"/>
     </inertial>
   </link>
+  <!-- For Drake simulation -->
+  <transmission name="crane_x7_gripper_finger_a_joint_trans">
+    <provideFeedback>true</provideFeedback>
+    <implicitSpringDamper>0</implicitSpringDamper>
+    <motorTorqueConstant>0.418</motorTorqueConstant>
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="crane_x7_gripper_finger_b_joint">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="crane_x7_gripper_finger_b_joint_motor">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
   <!-- For gazebo simulation -->
-  <gazebo>
+  <!-- <gazebo>
     <plugin filename="libroboticsgroup_gazebo_mimic_joint_plugin.so" name="crane_x7_gripper_mimic_joint">
       <joint>crane_x7_gripper_finger_a_joint</joint>
       <mimicJoint>crane_x7_gripper_finger_b_joint</mimicJoint>
       <multiplier>1</multiplier>
     </plugin>
-  </gazebo>
+  </gazebo> -->
   <gazebo reference="crane_x7_gripper_base_link">
     <material>Gazebo/Red</material>
   </gazebo>
