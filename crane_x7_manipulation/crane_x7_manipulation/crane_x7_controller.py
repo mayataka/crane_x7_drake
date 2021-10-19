@@ -1,23 +1,27 @@
 from pydrake.all import LeafSystem, BasicVector, JacobianWrtVariable
+from pydrake.manipulation.planner import DifferentialInverseKinematicsIntegrator, DifferentialInverseKinematicsParameters
+from pydrake.systems.framework import LeafSystem
+import crane_x7_station
 import numpy as np
 
 
+
 class DiffIKController(LeafSystem):
-    def __init__(self, plant):
+    def __init__(self, station):
         LeafSystem.__init__(self)
-        self._plant = plant
-        self._plant_context = plant.CreateDefaultContext()
-        self._iiwa = plant.GetModelInstanceByName("crane_x7")
-        self._G = plant.GetBodyByName("crane_x7_gripper_base_link").body_frame()
-        self._W = plant.world_frame()
+        self._plant = station.plant
+        self._plant_context = station.plant.CreateDefaultContext()
+        self._model = station.plant.GetModelInstanceByName("crane_x7")
+        self._G = station.end_effector_frame()
+        self._W = station.plant.world_frame()
 
         self.DeclareVectorInputPort("crane_x7_state", BasicVector(18))
         self.DeclareVectorOutputPort("crane_x7_velocity", BasicVector(9), 
-                                     self.CalcOutput)
+                                     self.calc_output)
 
-    def CalcOutput(self, context, output):
+    def calc_output(self, context, output):
         q = self.get_input_port().Eval(context)[0:9]
-        self._plant.SetPositions(self._plant_context, self._iiwa, q)
+        self._plant.SetPositions(self._plant_context, self._model, q)
         J_G = self._plant.CalcJacobianSpatialVelocity(
             self._plant_context, JacobianWrtVariable.kQDot, 
             self._G, [0,0,0], self._W, self._W)
