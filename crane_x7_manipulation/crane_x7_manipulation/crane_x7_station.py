@@ -48,13 +48,16 @@ class CraneX7Station(object):
             self.plant.Finalize()
         return self.plant, self.model, self.scene_graph
 
-    def create_diff_ik(self, time_step=None, robot_context=None):
+    def create_diff_ik(self, time_step=None, robot_context=None, end_effector_velocity_gain=None):
         if time_step is None:
             time_step = self.plant.time_step()
         self.diff_ik_params.set_joint_position_limits([self.plant.GetPositionLowerLimits(),
                                                        self.plant.GetPositionUpperLimits()])
         self.diff_ik_params.set_joint_velocity_limits([self.plant.GetVelocityLowerLimits(),
                                                        self.plant.GetVelocityUpperLimits()])
+        self.diff_ik_params.set_nominal_joint_position(self.get_home_position())
+        if end_effector_velocity_gain is not None:
+            self.diff_ik_params.set_end_effector_velocity_gain(end_effector_velocity_gain)
         self.diff_ik = DifferentialInverseKinematicsIntegrator(self.plant, self.get_end_effector_frame(),
                                                                time_step, self.diff_ik_params, robot_context)
         return self.diff_ik
@@ -71,10 +74,10 @@ class CraneX7Station(object):
 
     def create_invdyn_controller(self, kp=None, ki=None, kd=None, has_reference_acceleration=False):
         if kp is None:
-            kp = 0.1 * np.ones(9)
+            kp = 100.0 * np.ones(9)
         if ki is None:
-            ki = 0. * np.ones(9)
+            ki = 1.0 * np.ones(9)
         if kd is None:
-            kd = 0. * np.ones(9)
+            kd = 20.0 * np.ones(9)
         self.invdyn_controller = InverseDynamicsController(self.plant, kp, ki, kd, has_reference_acceleration)
         return self.invdyn_controller
